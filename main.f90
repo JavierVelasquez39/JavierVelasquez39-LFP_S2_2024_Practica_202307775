@@ -82,21 +82,22 @@ program main
             case (1)
                 call vaciarInventario() ! Limpia el inventario antes de cargarlo
                 call cargarInventarioArchivo()
-                print *, "Presione cualquier tecla para regresar al menú principal..."
+                print *, "Presione cualquier tecla para regresar al menu principal..."
                 read *
             case (2)
                 call accionesArchivo()
-                print *, "Presione cualquier tecla para regresar al menú principal..."
+                print *, "Presione cualquier tecla para regresar al menu principal..."
                 read *
             case (3)
                 call crearInformeInventario()
             case (4)
                 print *, "Saliendo del programa..."
                 do i=1, n-1
-                    print *, "Equipo: ", trim(inventario(i)%nombre)
-                    print *, "Cantidad: ", inventario(i)%cantidad
+                    print *, "Equipo: ", i
+                    print *, "Nombre: ", inventario(i)%nombre
+                    print *, "cantidad: ", inventario(i)%cantidad
                     print *, "Precio: ", inventario(i)%precio
-                    print *, "Ubicacion: ", trim(inventario(i)%ubicacion)
+                    print *, "Ubicacion: ", inventario(i)%ubicacion
                 end do
                 exit
             case (5)
@@ -194,7 +195,6 @@ subroutine crearInventario(nombre, cantidad, precio, ubicacion)
     call equipoNuevo%inicializar(nombre, cantidad, precio, ubicacion)
     inventario(n) = equipoNuevo
     n = n + 1
-    print *, "Inventario actualizado. n = ", n  ! <--- Depuración
 end subroutine crearInventario
 
 subroutine AccionesArchivo()
@@ -222,7 +222,7 @@ subroutine AccionesArchivo()
         read(iunit, '(A)', iostat=ios) linea
         if (ios /= 0) exit
         linea = trim(linea)
-        print *, "Leyendo línea: ", linea
+        print *, "Leyendo linea: ", linea
 
         ! Encuentra el primer espacio para extraer el comando
         pos = index(linea, ' ')
@@ -266,7 +266,7 @@ subroutine agregar_stock(nombre, cantidad, ubicacion)
         if(inventario(i)%nombre == nombre .and. inventario(i)%ubicacion == ubicacion) then
             call inventario(i)%agregarStock(cantidad)
             encontrado = .true.
-            print *, "Agregado stock: ", cantidad, " de ", trim(nombre), " en ", trim(ubicacion)
+            print *, "Stock agregado: ", cantidad, " de ", trim(nombre), " en ", trim(ubicacion)
         endif
     end do
 
@@ -294,7 +294,7 @@ subroutine eliminar_equipo(nombre, cantidad, ubicacion)
     end do
 
     if (.not. encontrado) then
-        print *, "No se encontró el producto ", nombre, " en la ubicación ", ubicacion
+        print *, "No se encontro el producto ", nombre, " en la ubicacion ", ubicacion
     end if
 end subroutine eliminar_equipo
 
@@ -315,15 +315,15 @@ subroutine crearInformeInventario()
         print *, "Error al abrir el archivo de informe.txt"
         stop
     endif 
-
+ 
     ! Encabezado del informe 
-    write(iunit, '(A30, A20, A20, A20, A20)') "Nombre", "Cantidad", "Precio Unitario", "Valor total", "Ubicacion"
+    write(iunit, '(A20, A10, A15, A15, A15)') "Nombre", "Cantidad", "Precio", "Valor total", "Ubicacion"
 
     ! Escribe el contenido del inventario en el archivo
     do i=1, n-1
         valor_total = inventario(i)%cantidad * inventario(i)%precio
-        write(iunit, '(A30, I10, F10.2, F10.2, A20)') trim(inventario(i)%nombre), inventario(i)%cantidad, inventario(i)%precio, valor_total, trim(inventario(i)%ubicacion)
-    end do 
+        write(iunit, '(A20, I10, F15.2, F15.2, A15)') trim(inventario(i)%nombre), inventario(i)%cantidad, inventario(i)%precio, valor_total, trim(inventario(i)%ubicacion)
+    end do
 
     ! Cierra el archivo
     close(unit=iunit)
