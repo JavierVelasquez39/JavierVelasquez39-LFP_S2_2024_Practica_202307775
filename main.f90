@@ -1,6 +1,5 @@
 module Automodule
-    implicit none
-
+    
     type :: Equipo
         character(len=256) :: nombre
         integer :: cantidad
@@ -29,14 +28,10 @@ module Automodule
     end subroutine inicializar
 
     ! Subrutina para agregar stock al tipo de dato Equipo
-    subroutine agregarStock(this, cantidad, ubicacion)
+    subroutine agregarStock(this, cantidad)
         class(Equipo), intent(inout) :: this
         integer, intent(in) :: cantidad
-        character(len=256), intent(in) :: ubicacion
-
-        if (this%ubicacion == ubicacion) then
-            this%cantidad = this%cantidad + cantidad
-        endif
+        this%cantidad = this%cantidad + cantidad
     end subroutine agregarStock
 
     ! Subrutina para quitar stock al tipo de dato Equipo
@@ -79,35 +74,37 @@ program main
         print *, "2. Cargar Instrucciones de Movimiento"
         print *, "3. Crear informe de Inventario"
         print *, "4. Salir"
+        print *, "5. Eliminar elementos en pantalla"
         print *, "Ingrese una opcion"
         read *, op ! Leer la opcion del usuario
 
         select case (op)
             case (1)
+                call vaciarInventario() ! Limpia el inventario antes de cargarlo
                 call cargarInventarioArchivo()
                 print *, "Presione cualquier tecla para regresar al menú principal..."
                 read *
             case (2)
                 call accionesArchivo()
-                print *, "Acciones realizadas en el inventario:"
-                do i=1, n-1
-                    print *, "Equipo: ", trim(inventario(i)%nombre)
-                    print *, "Cantidad: ", inventario(i)%cantidad
-                    print *, "Precio: ", inventario(i)%precio
-                    print *, "Ubicacion: ", trim(inventario(i)%ubicacion)
-                end do
                 print *, "Presione cualquier tecla para regresar al menú principal..."
                 read *
             case (3)
                 call crearInformeInventario()
             case (4)
                 print *, "Saliendo del programa..."
+                do i=1, n-1
+                    print *, "Equipo: ", trim(inventario(i)%nombre)
+                    print *, "Cantidad: ", inventario(i)%cantidad
+                    print *, "Precio: ", inventario(i)%precio
+                    print *, "Ubicacion: ", trim(inventario(i)%ubicacion)
+                end do
                 exit
+            case (5)
+                call system("cls") 
             case default
                 print *, "Opcion no valida, presiona cualquier tecla para continuar"
                 read *
         end select
-        call system("cls") ! Limpiar la pantalla
     end do
 end program main
 
@@ -115,17 +112,22 @@ subroutine cargarInventarioArchivo()
     use Automodule
     use global_vars
     implicit none
+
     integer :: iunit, ios, pos, cantidad_int
     real :: precio_real
     character(len=256) :: nombre, cantidad, precio, ubicacion, linea, comando
+    character(len=256) :: archivoEntrada
+
+    print *, "Ingrese el nombre del archivo de entrada: "
+    read *, archivoEntrada
 
     ! Asignar unidad al archivo
     iunit = 10
 
-    open(unit=iunit, file="entrada.inv", status="old", action="read", iostat=ios)
+    open(unit=iunit, file=trim(archivoEntrada), status="old", action="read", iostat=ios)
 
     if (ios /= 0) then
-        print *, "Error al abrir el archivo de entrada.inv"
+        print *, "Error al abrir el archivo: ", trim(archivoEntrada)
         stop
     endif
 
@@ -134,7 +136,6 @@ subroutine cargarInventarioArchivo()
         if (ios /= 0) exit
         linea = trim(linea)
         
-
         ! Encuentra el primer espacio para extraer el comando
         pos = index(linea, " ")
         if (pos > 0) then
@@ -196,67 +197,61 @@ subroutine crearInventario(nombre, cantidad, precio, ubicacion)
     print *, "Inventario actualizado. n = ", n  ! <--- Depuración
 end subroutine crearInventario
 
-
-subroutine accionesArchivo()
+subroutine AccionesArchivo()
     use Automodule
     use global_vars
+
     integer :: iunit, ios, pos, cantidad_int
-    character(len=256) :: nombre, cantidad, ubicacion, linea, comando
+    character(len=256) :: nombre, ubicacion, linea, comando
+    character(len=256) :: archivoAcciones
 
-    iunit = 11 
+    print *, "Ingrese la ruta del archivo de instrucciones de movimientos:"
+    read *, archivoAcciones
 
-    ! Abre el archivo en modo lectura 
-    open(unit=iunit, file="instrucciones.mov", status="old", action="read", iostat=ios)
+    ! Archivo en modo lectura
+    iunit = 11
+    open(unit=iunit, file=trim(archivoAcciones), status="old", action="read", iostat=ios)
 
-    ! Verifica si el archivo se abrió correctamente
+    ! Verificar si hay error al abrir el archivo
     if (ios /= 0) then
-        print *, "Error al abrir el archivo de instrucciones.mov"
+        print *, "Error al abrir el archivo: ", archivoAcciones
         stop
-    endif
+    end if
 
-    ! Lee el archivo línea por línea
-    do 
+    do
         read(iunit, '(A)', iostat=ios) linea
-        if (ios /= 0) exit 
+        if (ios /= 0) exit
         linea = trim(linea)
+        print *, "Leyendo línea: ", linea
 
-        ! Encuentra el primer espacio para extraer el comando 
+        ! Encuentra el primer espacio para extraer el comando
         pos = index(linea, ' ')
-        if (pos > 0) then 
-            comando = linea(1:pos-1)
+        if (pos > 0) then
+            comando = trim(linea(1:pos-1))
             linea = trim(linea(pos+1:))
-
-            ! Separar por ';' 
+            ! Separar por ;
             pos = index(linea, ';')
-            if (pos > 0) then 
-                nombre = linea(1:pos-1)
+            if (pos > 0) then
+                nombre = trim(linea(1:pos-1))
                 linea = trim(linea(pos+1:))
-
+                ! Siguiente atributo
                 pos = index(linea, ';')
-                if (pos > 0) then 
-                    cantidad = linea(1:pos-1)
-                    linea = trim(linea(pos+1:))
-                    read(cantidad, '(I10)', iostat=ios) cantidad_int
+                if (pos > 0) then
+                    read(linea(1:pos-1), '(I10)', iostat=ios) cantidad_int
+                    ubicacion = trim(linea(pos+1:))
 
-                    ! Extraer ubicación
-                    pos = index(linea, ';')
-                    if (pos > 0) then
-                        ubicacion = linea(1:pos-1)
-                        linea = trim(linea(pos+1:))
-
-                        if (comando == "agregar_stock") then
-                            call agregar_stock(nombre, cantidad_int, ubicacion)
-                        elseif (comando == "eliminar_equipo") then
-                            call eliminar_equipo(nombre, cantidad_int, ubicacion)
-                        endif
-                    endif
-                endif
-            endif
-        endif
+                    if (comando == "agregar_stock") then
+                        call agregar_stock(nombre, cantidad_int, ubicacion)
+                    else if (comando == "eliminar_equipo") then
+                        call eliminar_equipo(nombre, cantidad_int, ubicacion)
+                    end if
+                end if
+            end if
+        end if
     end do
-    close(unit = iunit)
-    read *
-end subroutine accionesArchivo
+
+    close(unit=iunit)
+end subroutine AccionesArchivo
 
 subroutine agregar_stock(nombre, cantidad, ubicacion)
     use Automodule
@@ -265,29 +260,42 @@ subroutine agregar_stock(nombre, cantidad, ubicacion)
     character(len=256), intent(in) :: nombre
     integer, intent(in) :: cantidad
     character(len=256), intent(in) :: ubicacion
+    logical :: encontrado = .false.
 
     do i=1, n-1 
         if(inventario(i)%nombre == nombre .and. inventario(i)%ubicacion == ubicacion) then
-            call inventario(i)%agregarStock(cantidad, ubicacion)
+            call inventario(i)%agregarStock(cantidad)
+            encontrado = .true.
             print *, "Agregado stock: ", cantidad, " de ", trim(nombre), " en ", trim(ubicacion)
         endif
     end do
+
+    if (.not. encontrado) then
+        print *, "No se encontro el equipo ", trim(nombre), " en la ubicacion ", trim(ubicacion)
+    endif
 end subroutine agregar_stock
 
 subroutine eliminar_equipo(nombre, cantidad, ubicacion)
     use Automodule
     use global_vars
-    ! use dummy arguments
-    character(len=256), intent(in) :: nombre
-    integer, intent(in) :: cantidad
-    character(len=256), intent(in) :: ubicacion
+    !dummy
+    character(len=256), intent (in) :: nombre
+    integer, intent (in) :: cantidad
+    character(len=256), intent (in) :: ubicacion
+    logical :: encontrado = .false.
 
     do i=1, n-1
-        if (inventario(i)%nombre == nombre .and. inventario(i)%ubicacion == ubicacion) then
+        if(trim(inventario(i)%nombre) == trim(nombre) .and. trim(inventario(i)%ubicacion) == trim(ubicacion)) then
             call inventario(i)%quitarStock(cantidad)
-            print *, "Quitado stock: ", cantidad, " de ", trim(nombre), " en ", trim(ubicacion)
-        endif 
-    end do 
+            encontrado = .true.
+            print *, "Stock reducido de ", nombre, " en ", ubicacion
+            print *, "Nueva cantidad: ", inventario(i)%cantidad
+        end if
+    end do
+
+    if (.not. encontrado) then
+        print *, "No se encontró el producto ", nombre, " en la ubicación ", ubicacion
+    end if
 end subroutine eliminar_equipo
 
 subroutine crearInformeInventario()
@@ -295,6 +303,7 @@ subroutine crearInformeInventario()
     use global_vars
 
     integer :: iunit, ios
+    real :: valor_total
 
     iunit = 20
 
@@ -308,12 +317,12 @@ subroutine crearInformeInventario()
     endif 
 
     ! Encabezado del informe 
-    write(iunit, '(A30, A20, A20, A20)') "Nombre", "Cantidad", "Precio Unitario", "Ubicacion"
+    write(iunit, '(A30, A20, A20, A20, A20)') "Nombre", "Cantidad", "Precio Unitario", "Valor total", "Ubicacion"
 
     ! Escribe el contenido del inventario en el archivo
     do i=1, n-1
-        ! Depuración: Imprimir los valores antes de escribirlos en el archivo
-        write(iunit, '(A30, I10, F10.2, A20)') trim(inventario(i)%nombre), inventario(i)%cantidad, inventario(i)%precio, trim(inventario(i)%ubicacion)
+        valor_total = inventario(i)%cantidad * inventario(i)%precio
+        write(iunit, '(A30, I10, F10.2, F10.2, A20)') trim(inventario(i)%nombre), inventario(i)%cantidad, inventario(i)%precio, valor_total, trim(inventario(i)%ubicacion)
     end do 
 
     ! Cierra el archivo
@@ -323,3 +332,8 @@ subroutine crearInformeInventario()
     print *, "Presione una tecla para continuar: "
     read * 
 end subroutine crearInformeInventario
+
+subroutine vaciarInventario()
+    use global_vars
+    n = 1 
+end subroutine vaciarInventario
