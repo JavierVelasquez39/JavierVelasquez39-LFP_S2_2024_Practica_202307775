@@ -61,7 +61,7 @@ module global_vars
     use Automodule
     integer :: n=1
     integer :: i
-    type(Equipo), dimension(100) :: inventario
+    type(Equipo), dimension(150) :: inventario
 end module global_vars
 
 program main
@@ -85,14 +85,8 @@ program main
         select case (op)
             case (1)
                 call cargarInventarioArchivo()
-                print *, "Número de elementos en el inventario: ", n-1  ! <--- Cambio aquí
-                do i=1, n-1
-                    print *, "Equipo: ", trim(inventario(i)%nombre)
-                    print *, "Cantidad: ", inventario(i)%cantidad
-                    print *, "Precio: ", inventario(i)%precio
-                    print *, "Ubicacion: ", trim(inventario(i)%ubicacion)
-                    read *
-                end do
+                print *, "Presione cualquier tecla para regresar al menú principal..."
+                read *
             case (2)
                 call accionesArchivo()
                 print *, "Acciones realizadas en el inventario:"
@@ -101,10 +95,11 @@ program main
                     print *, "Cantidad: ", inventario(i)%cantidad
                     print *, "Precio: ", inventario(i)%precio
                     print *, "Ubicacion: ", trim(inventario(i)%ubicacion)
-                    read *
                 end do
+                print *, "Presione cualquier tecla para regresar al menú principal..."
+                read *
             case (3)
-                !call crearInformeInventario()
+                call crearInformeInventario()
             case (4)
                 print *, "Saliendo del programa..."
                 exit
@@ -173,7 +168,7 @@ subroutine cargarInventarioArchivo()
                         ubicacion = linea
                         print *, "Ubicacion: ", ubicacion  ! <--- Depuración
 
-                        if (comando == "crear_inventario") then
+                        if (comando == "crear_equipo") then
                             call crearInventario(nombre, cantidad_int, precio_real, ubicacion)
                         endif
                     endif
@@ -294,3 +289,37 @@ subroutine eliminar_equipo(nombre, cantidad, ubicacion)
         endif 
     end do 
 end subroutine eliminar_equipo
+
+subroutine crearInformeInventario()
+    use Automodule
+    use global_vars
+
+    integer :: iunit, ios
+
+    iunit = 20
+
+    ! Abre el archivo en modo escritura, reemplazando el contenido si ya existe
+    open(unit=iunit, file="informe.txt", status="replace", action="write", iostat=ios)
+
+    ! Verifica si el archivo se abrió correctamente
+    if (ios /= 0) then
+        print *, "Error al abrir el archivo de informe.txt"
+        stop
+    endif 
+
+    ! Encabezado del informe 
+    write(iunit, '(A30, A20, A20, A20)') "Nombre", "Cantidad", "Precio Unitario", "Ubicacion"
+
+    ! Escribe el contenido del inventario en el archivo
+    do i=1, n-1
+        ! Depuración: Imprimir los valores antes de escribirlos en el archivo
+        write(iunit, '(A30, I10, F10.2, A20)') trim(inventario(i)%nombre), inventario(i)%cantidad, inventario(i)%precio, trim(inventario(i)%ubicacion)
+    end do 
+
+    ! Cierra el archivo
+    close(unit=iunit)
+    print *, "Informe de inventario creado en informe.txt"
+    print *, "--------------------------------------------"
+    print *, "Presione una tecla para continuar: "
+    read * 
+end subroutine crearInformeInventario

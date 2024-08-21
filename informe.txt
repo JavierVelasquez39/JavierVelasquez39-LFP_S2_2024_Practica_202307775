@@ -1,0 +1,21 @@
+                        Nombre            Cantidad     Precio Unitario           Ubicacion
+                       Lapices       100      2.50             BodegaA
+                  Computadoras        50   3000.00             BodegaB
+                   Escritorios        75    100.75             BodegaC
+                        Sillas       150     45.00             BodegaD
+                    Impresoras        20    200.00             BodegaE
+                     Monitores        60    250.00             BodegaF
+                   Proyectores        15    500.00             BodegaG
+                       Tablets        40    400.00             BodegaH
+                     Telefonos        80    150.00             BodegaI
+                       Camaras        25    750.00             BodegaJ
+                  Computadoras        30   3000.00             BodegaC
+                       Lapices       200      2.50             BodegaB
+                        Sillas       100     45.00             BodegaE
+                     Monitores        40    250.00             BodegaA
+                   Proyectores        10    500.00             BodegaF
+                       Tablets        25    400.00             BodegaB
+                   Escritorios        50    100.75             BodegaD
+                     Telefonos        60    150.00             BodegaG
+                       Camaras        10    750.00             BodegaH
+                    Impresoras        15    200.00             BodegaC
